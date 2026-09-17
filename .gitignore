@@ -1,0 +1,29 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches e Ambientes Virtuais
+.venv/
+venv/
+env/
+ENV/
+
+# Relatórios de Testes e Cobertura
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# SonarQube cache local
+.sonar/
+.scannerwork/
+
+# Variáveis de ambiente e Chaves de segurança (NUNCA comitar chaves da AWS!)
+.env
+*.pem
+*.key
+
+# IDEs
+.vscode/
+.idea/

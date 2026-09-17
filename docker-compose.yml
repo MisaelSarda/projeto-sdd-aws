@@ -1,0 +1,18 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${DOCKER_IMAGE:-sdd-api-app:latest}
+    container_name: sdd-api-service
+    restart: always
+    ports:
+      # Mapeia a porta 80 da máquina EC2 diretamente para a porta 8000 da aplicação
+      - "80:8000"
+    environment:
+      - APP_ENV=production
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

@@ -1,0 +1,288 @@
+openapi: 3.0.3
+info:
+  title: Task & Service Health API
+  description: API desenvolvida com base na técnica de engenharia SDD (Spec-Driven Development) para avaliação acadêmica de DevOps e Cloud.
+  version: 1.0.0
+  contact:
+    name: Equipe de Engenharia de Software
+servers:
+  - url: http://localhost:8000
+    description: Servidor Local de Desenvolvimento
+  - url: http://{ec2_host}
+    description: Servidor de Produção na AWS EC2
+    variables:
+      ec2_host:
+        default: localhost
+        description: IP Público ou DNS da instância AWS EC2
+
+paths:
+  /health:
+    get:
+      summary: Health Check da Aplicação
+      description: Retorna o status de integridade da API para monitoramento e validação de deploy.
+      operationId: getHealth
+      responses:
+        '200':
+          description: Serviço operacional
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/info:
+    get:
+      summary: Informações da Aplicação e do Ambiente
+      description: Exibe versão, autor e detalhes do ambiente em execução.
+      operationId: getAppInfo
+      responses:
+        '200':
+          description: Informações obtidas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppInfoResponse'
+
+  /api/v1/tasks:
+    get:
+      summary: Listar todas as tarefas
+      description: Retorna a lista de tarefas, opcionalmente filtrada por status.
+      operationId: listTasks
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/TaskStatus'
+          description: Filtrar tarefas por status
+      responses:
+        '200':
+          description: Lista de tarefas retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskResponse'
+    post:
+      summary: Criar uma nova tarefa
+      description: Cadastra uma nova tarefa validando estritamente os campos conforme o schema.
+      operationId: createTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        '201':
+          description: Tarefa criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '422':
+          description: Erro de validação de schema (SDD)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+
+  /api/v1/tasks/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: Identificador único da tarefa
+    get:
+      summary: Obter detalhes de uma tarefa
+      operationId: getTaskById
+      responses:
+        '200':
+          description: Tarefa encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          description: Tarefa não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Atualizar uma tarefa existente
+      operationId: updateTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+      responses:
+        '200':
+          description: Tarefa atualizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          description: Tarefa não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Remover uma tarefa
+      operationId: deleteTask
+      responses:
+        '204':
+          description: Tarefa removida com sucesso (sem conteúdo)
+        '404':
+          description: Tarefa não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    TaskPriority:
+      type: string
+      enum: [LOW, MEDIUM, HIGH]
+      default: MEDIUM
+
+    TaskStatus:
+      type: string
+      enum: [PENDING, IN_PROGRESS, COMPLETED]
+      default: PENDING
+
+    TaskCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: "Configurar EC2 na AWS"
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+          example: "Subir instância Ubuntu 24.04 e instalar Docker"
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+
+    TaskResponse:
+      type: object
+      required:
+        - id
+        - title
+        - priority
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "Configurar EC2 na AWS"
+        description:
+          type: string
+          nullable: true
+          example: "Subir instância Ubuntu 24.04 e instalar Docker"
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - version
+      properties:
+        status:
+          type: string
+          example: "healthy"
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+          example: "1.0.0"
+
+    AppInfoResponse:
+      type: object
+      required:
+        - application
+        - version
+        - methodology
+        - environment
+      properties:
+        application:
+          type: string
+          example: "Task & Service Health API"
+        version:
+          type: string
+          example: "1.0.0"
+        methodology:
+          type: string
+          example: "Spec-Driven Development (SDD)"
+        environment:
+          type: string
+          example: "production"
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          example: "Recurso não encontrado"
+
+    HTTPValidationError:
+      type: object
+      properties:
+        detail:
+          type: array
+          items:
+            type: object
+            properties:
+              loc:
+                type: array
+                items:
+                  type: string
+              msg:
+                type: string
+              type:
+                type: string
