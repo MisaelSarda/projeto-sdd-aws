@@ -2,8 +2,8 @@
 ## Projeto: Task & Service Health API (SDD + AWS + CI/CD)
 
 **Integrantes da Dupla:**
-- Estudante 1: [Nome do Integrante 1] - DevOps & Cloud Lead
-- Estudante 2: [Nome do Integrante 2] - Software Engineer & SDD Lead
+- Estudante 1: Misael Pablo Sardá - DevOps & Cloud Lead
+- Estudante 2: Vinicius Policarpo Macedo - Software Engineer & SDD Lead
 
 **Data:** 16 de Setembro de 2026  
 **Versão:** 1.0.0  

@@ -8,7 +8,7 @@ on:
 
 jobs:
   # =========================================================================
-  # ETAPA 1 & 2: Testes Automatizados e Scanner de Segurança (SonarQube/SonarCloud)
+  # ETAPA 1 & 2: Testes Automatizados e Scanner de Segurança (SonarCloud/SAST)
   # =========================================================================
   test-and-security:
     name: Testes Unitários e SAST (SonarQube)
@@ -35,12 +35,14 @@ jobs:
         run: |
           pytest --cov=app --cov-report=xml --cov-report=term
 
-      - name: Scanner de Segurança SonarCloud
-        uses: SonarSource/sonarcloud-github-action@master
+      # Scanner de segurança estática (SAST). Com 'sonar.qualitygate.wait=true'
+      # no sonar-project.properties, este passo AGUARDA o Quality Gate e FALHA
+      # a pipeline se ele reprovar — bloqueando o deploy de código inseguro.
+      - name: Scanner de Segurança SonarCloud (SAST + Quality Gate)
+        uses: SonarSource/sonarqube-scan-action@v4
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        continue-on-error: false # Falha o pipeline se não passar no Quality Gate
+          SONAR_HOST_URL: https://sonarcloud.io
 
   # =========================================================================
   # ETAPA 3 & 4: Build da Imagem Docker e Deploy Automatizado na AWS EC2
@@ -85,11 +87,9 @@ jobs:
             mkdir -p ~/app
             cd ~/app
 
-            # Exportar a imagem que acabou de ser gerada
             export DOCKER_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/sdd-api-app:latest
 
-            # Criar ou atualizar docker-compose.yml na máquina de produção
-            cat << 'EOF' > docker-compose.yml
+            cat << 'COMPOSE' > docker-compose.yml
             services:
               api:
                 image: ${DOCKER_IMAGE}
@@ -104,14 +104,12 @@ jobs:
                   interval: 30s
                   timeout: 5s
                   retries: 3
-            EOF
+            COMPOSE
 
-            # Fazer pull da imagem atualizada e reiniciar os containers
             docker compose pull
             docker compose down
             docker compose up -d
 
-            # Aguardar inicialização e validar status
             sleep 5
             curl -f http://localhost/health || exit 1
             echo "Deploy finalizado com sucesso na porta 80 da AWS EC2!"

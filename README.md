@@ -6,8 +6,8 @@
 
 > **Trabalho Prático de Engenharia de Software e DevOps em Nuvem**  
 > **Integrantes da Dupla:**  
-> - Estudante 1: [Misael Pablo Sardá] - DevOps & Cloud Lead  
-> - Estudante 2: [Viniciues Policarpo Macedo] - Software Engineer & SDD Lead  
+> - Estudante 1: Misael Pablo Sardá - DevOps & Cloud Lead  
+> - Estudante 2: Vinicius Policarpo Macedo - Software Engineer & SDD Lead  
 
 ---
 
